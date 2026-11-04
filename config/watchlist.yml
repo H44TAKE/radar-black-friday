@@ -1,0 +1,123 @@
+# =====================================================================
+#  RADAR BLACK FRIDAY 2026 — o que monitorar
+#  Edite este arquivo (pelo próprio GitHub, no celular se quiser) e o
+#  próximo ciclo já usa. Preços em reais (R$), à vista (Pix/boleto).
+# =====================================================================
+
+settings:
+  timezone: America/Sao_Paulo
+  heartbeat_hour: 9              # mensagem diária "estou vivo" + fontes com problema
+  results_per_search: 30
+  intervals_minutes:             # o workflow roda a cada 5 min e executa só o que está "vencido"
+    priority: 10                 # produtos específicos (Isengard, ELG)
+    general: 30                  # categorias
+    community: 5                 # Telegram / Instagram
+  history:
+    min_observations: 6          # amostras mínimas para considerar o "preço habitual" confiável
+    min_span_days: 2
+    window_days: 30
+  alerts:
+    default_min_drop_pct: 10     # queda mínima vs. preço habitual (quando a categoria não define)
+    resend_drop_pct: 5           # só reavisa o mesmo anúncio se cair mais 5%
+    unverified_claim_min_pct: 40 # sem histórico: só avisa se a loja declarar >= 40% de desconto
+    max_unverified_per_day: 3    # teto de avisos "sem histórico" por assunto/dia
+    community_max_age_hours: 8   # ignora publicações de comunidade mais antigas que isso
+
+# ---------------------------------------------------------------- lojas
+# enabled: true | false | auto (auto = liga só se as credenciais existirem)
+stores:
+  terabyte:     {enabled: true}
+  kabum:        {enabled: true}
+  pichau:       {enabled: true}
+  mercadolivre: {enabled: true}  # melhor com ML_CLIENT_ID/ML_CLIENT_SECRET (reputação do vendedor)
+  aliexpress:   {enabled: auto}  # exige ALI_APP_KEY / ALI_APP_SECRET (API de afiliados)
+  shopee:       {enabled: auto}  # exige SHOPEE_APP_ID / SHOPEE_SECRET (API de afiliados)
+
+# ---------------------------------------------------------------- produtos específicos
+products:
+  - id: isengard-magic-360
+    name: Water Cooler SuperFrame Isengard Magic 360mm
+    priority: true
+    urls:
+      terabyte: https://www.terabyteshop.com.br/produto/28263/water-cooler-superframe-isengard-magic-360mm-bomba-infinit-display-lcd-customizavel-argb-intel-amd-controladora-white-magic-360mm-wh
+    search_terms: ["isengard magic 360", "superframe isengard magic"]
+    match_all: [[isengard], [magic], ["360"]]   # cada grupo precisa aparecer no título
+    min_drop_pct: 7              # "queda relevante": 7% abaixo do habitual (ou menor preço já visto)
+    max_price: 600               # também alerta se ficar abaixo de R$ 600 (prioridade da Categoria C)
+
+  - id: elg-braco-articulado
+    name: Braço articulado ELG
+    priority: true
+    search_terms: ["braço articulado elg", "suporte monitor elg", "elg braço monitor"]
+    match_all: [[elg], [braço, braco, articulado, suporte]]
+    exclude_any: ["tv ", "projetor", "microfone"]
+    min_drop_pct: 12
+    min_rating: 4.0
+
+# ---------------------------------------------------------------- categorias (qualquer marca/loja)
+categories:
+  - id: bracos-ate-85
+    name: Braço articulado para monitor até R$ 85
+    rule: monitor_arm
+    max_price: 85
+    min_rating: 4.0
+    search_terms: ["braço articulado monitor", "suporte articulado monitor", "suporte monitor pistão a gás"]
+
+  - id: kit-ventoinhas-argb
+    name: Kit de ventoinhas ARGB (3+)
+    rule: argb_fan_kit
+    min_fans: 3
+    min_drop_pct: 25             # sem teto de preço: avisa quedas expressivas vs. habitual
+    min_rating: 4.3
+    search_terms: ["kit ventoinha argb 3 fans", "kit 3 fans argb controladora", "kit cooler fan argb 120mm"]
+
+  - id: watercooler-lcd-ate-600
+    name: Water cooler com tela LCD personalizável até R$ 600
+    rule: lcd_watercooler
+    max_price: 600
+    sizes: [240, 360]
+    search_terms: ["water cooler lcd 360mm", "water cooler tela lcd personalizável", "water cooler display lcd 240mm", "water cooler tela redonda"]
+
+# modelos com tela personalizável CONFIRMADA pelo fabricante (regex sobre o título normalizado).
+# Acrescente aqui outros que você conhecer. Só entram na categoria se o título casar OU se o texto
+# do anúncio falar em LCD/tela + personalizar/GIF.
+known_lcd_models:
+  - "isengard magic"
+  - "superframe.*(magic|lcd)"
+  - "kraken (elite|z\\d{2}|20(23|24))"
+  - "galahad ii? lcd|galahad 2 lcd"
+  - "h\\d{3}i elite.*lcd|titan \\d{3} rx.*lcd|icue link titan.*lcd"
+  - "frozen warframe"
+  - "mpg coreliquid k\\d{3}"
+
+# ---------------------------------------------------------------- comunidades (Seção 2.1)
+telegram:
+  respect_robots: true
+  bot_groups: true               # lê grupos onde o SEU bot foi adicionado (desligue o Group Privacy no BotFather)
+  # groups_allow: [-1001234567890, meu_grupo_publico]   # opcional: restringe a estes grupos
+  channels:                      # canais PÚBLICOS (visualização web t.me/s/<canal>) — adicione os seus
+    - handle: ofertaskabum       # canal oficial da KaBuM! (linkado na página oficial deles)
+    - handle: pxinxa             # ofertas gerais (testei a visualização web)
+      redirect_hosts: [pxinxa.com.br]
+    - handle: cupons_desconto    # Promobit — Promoções e Cupons
+
+instagram:
+  enabled: auto                  # precisa de IG_USER_ID + IG_ACCESS_TOKEN (API oficial Business Discovery)
+  profiles: []                   # @usuarios de perfis COMERCIAIS/CRIADOR públicos. Ex.: [perfil_de_ofertas]
+
+# Só abrimos links/lojas desta lista (anti-golpe). Subdomínios valem.
+trusted_domains:
+  - terabyteshop.com.br
+  - kabum.com.br
+  - pichau.com.br
+  - mercadolivre.com.br
+  - aliexpress.com
+  - shopee.com.br
+  - amazon.com.br
+  - magazineluiza.com.br
+  - magalu.com
+  - gigantec.com.br
+  - patoloco.com.br
+  - kalunga.com.br
+  - fastshop.com.br
+  - casasbahia.com.br

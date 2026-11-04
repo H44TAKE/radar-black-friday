@@ -1,0 +1,56 @@
+name: diagnostico
+
+# Teste ao vivo de TODAS as fontes (lojas, canais do Telegram, Instagram) + teste da notificação.
+# Rode manualmente (Actions > diagnostico > Run workflow) logo após configurar, e sempre que uma loja mudar o layout.
+on:
+  workflow_dispatch:
+    inputs:
+      notify:
+        description: "Enviar uma mensagem de teste para o celular?"
+        default: "true"
+
+permissions:
+  contents: read
+
+jobs:
+  diagnose:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: pip install -r requirements.txt
+
+      - name: Testes automatizados
+        run: python -m pytest -q
+
+      - name: Notificação de teste
+        if: ${{ github.event.inputs.notify == 'true' }}
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          NTFY_TOPIC: ${{ secrets.NTFY_TOPIC }}
+        run: python -m radar test-notify
+
+      - name: Diagnóstico das fontes
+        env:
+          ML_CLIENT_ID: ${{ secrets.ML_CLIENT_ID }}
+          ML_CLIENT_SECRET: ${{ secrets.ML_CLIENT_SECRET }}
+          ALI_APP_KEY: ${{ secrets.ALI_APP_KEY }}
+          ALI_APP_SECRET: ${{ secrets.ALI_APP_SECRET }}
+          SHOPEE_APP_ID: ${{ secrets.SHOPEE_APP_ID }}
+          SHOPEE_SECRET: ${{ secrets.SHOPEE_SECRET }}
+          IG_USER_ID: ${{ secrets.IG_USER_ID }}
+          IG_ACCESS_TOKEN: ${{ secrets.IG_ACCESS_TOKEN }}
+        run: |
+          python -m radar --db state/diag.sqlite diagnose --out-dir state/diagnostico | tee diagnostico.txt
+          { echo '### Diagnóstico das fontes'; echo '```'; cat diagnostico.txt; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: diagnostico-html
+          path: state/diagnostico

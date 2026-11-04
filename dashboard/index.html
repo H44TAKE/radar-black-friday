@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Radar Black Friday 2026</title>
+<style>
+:root{color-scheme:light;--bg:#f4f4f2;--surface:#fcfcfb;--ink:#0b0b0b;--ink2:#52514e;--ink3:#8a8984;--line:#e4e3de;
+--series:#2a78d6;--good:#0b7a43;--warn:#9a6700;--bad:#c4302b;--good-bg:#e6f4ec;--warn-bg:#fdf3dc;--bad-bg:#fbe9e8;--chip:#efeeea}
+@media (prefers-color-scheme:dark){:root{color-scheme:dark;--bg:#121211;--surface:#1a1a19;--ink:#f0efec;--ink2:#c3c2b7;--ink3:#8d8c85;--line:#2b2b29;
+--series:#3987e5;--good:#4cc48a;--warn:#e0b04a;--bad:#ef7a76;--good-bg:#12291d;--warn-bg:#2d2411;--bad-bg:#2f1716;--chip:#242422}}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+main{max-width:1080px;margin:0 auto;padding:20px 16px 60px}
+header{display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between;margin-bottom:18px}
+h1{font-size:22px;margin:0;letter-spacing:-.01em}h2{font-size:16px;margin:28px 0 10px}
+.sub{color:var(--ink2);font-size:13px}
+.pill{display:inline-flex;gap:6px;align-items:center;padding:4px 10px;border-radius:999px;font-size:13px;font-weight:600}
+.pill.good{background:var(--good-bg);color:var(--good)}.pill.warn{background:var(--warn-bg);color:var(--warn)}.pill.bad{background:var(--bad-bg);color:var(--bad)}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+.kpi,.card{background:var(--surface);border:1px solid var(--line);border-radius:12px}
+.kpi{padding:12px 14px}.kpi b{display:block;font-size:24px;letter-spacing:-.02em}.kpi span{color:var(--ink2);font-size:13px}
+.card{padding:14px 16px;margin-bottom:12px}
+.card h3{margin:0 0 2px;font-size:16px}.meta{color:var(--ink2);font-size:13px;margin-bottom:8px}
+table{width:100%;border-collapse:collapse;font-size:14px}
+th{font-weight:600;color:var(--ink2);text-align:left;font-size:12px;padding:6px 8px;border-bottom:1px solid var(--line)}
+td{padding:8px;border-bottom:1px solid var(--line);vertical-align:middle}tr:last-child td{border-bottom:0}
+td.num,th.num{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+a{color:var(--series);text-decoration:none}a:hover{text-decoration:underline}
+.t{max-width:340px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.hit{background:var(--good-bg)}.tag{font-size:11px;padding:1px 7px;border-radius:999px;background:var(--chip);color:var(--ink2);margin-left:6px;white-space:nowrap}
+.tag.good{background:var(--good-bg);color:var(--good)}.tag.bad{background:var(--bad-bg);color:var(--bad)}.tag.warn{background:var(--warn-bg);color:var(--warn)}
+svg.spark{display:block;overflow:visible}
+#tip{position:fixed;pointer-events:none;background:var(--ink);color:var(--bg);padding:5px 8px;border-radius:6px;font-size:12px;display:none;z-index:9;white-space:nowrap}
+.empty{color:var(--ink3);padding:14px;text-align:center}
+.scroll{overflow-x:auto}
+.toggle{background:none;border:1px solid var(--line);color:var(--ink2);border-radius:8px;padding:3px 9px;font-size:12px;cursor:pointer}
+td.w{white-space:normal;min-width:140px}
+@media (max-width:640px){.hide-s{display:none}.t{max-width:96px}td,th{padding:7px 4px;font-size:13px}.card{padding:12px 10px}main{padding:16px 10px 50px}td.w{min-width:110px}}
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <div><h1>Radar Black Friday 2026</h1><div class="sub" id="gen">carregando…</div></div>
+    <div id="status"></div>
+  </header>
+  <section class="kpis" id="kpis"></section>
+  <h2>O que estou acompanhando</h2><div id="subjects"></div>
+  <h2>Últimos alertas enviados</h2><div class="card scroll" id="alerts"></div>
+  <h2>Comunidades (Telegram / Instagram)</h2><div class="card scroll" id="community"></div>
+  <h2>Status das fontes</h2><div class="card scroll" id="sources"></div>
+</main>
+<div id="tip"></div>
+<script>
+const $=s=>document.querySelector(s);
+const brl=v=>v==null?'—':v.toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
+const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const ago=iso=>{if(!iso)return '—';const m=Math.round((Date.now()-new Date(iso))/60000);if(m<1)return 'agora';if(m<60)return m+' min';const h=Math.round(m/60);return h<48?h+' h':Math.round(h/24)+' d'};
+const tip=$('#tip');
+function spark(series,w=120,h=34){
+  if(!series||series.length<2)return '<span class="sub">sem histórico</span>';
+  const xs=series.map(p=>+new Date(p[0])),ys=series.map(p=>p[1]);
+  const x0=Math.min(...xs),x1=Math.max(...xs),y0=Math.min(...ys),y1=Math.max(...ys),pad=3;
+  const X=t=>pad+(x1===x0?0:(t-x0)/(x1-x0))*(w-2*pad),Y=v=>h-pad-(y1===y0?.5:(v-y0)/(y1-y0))*(h-2*pad);
+  const pts=series.map((p,i)=>X(xs[i]).toFixed(1)+','+Y(ys[i]).toFixed(1)).join(' ');
+  const data=encodeURIComponent(JSON.stringify(series));
+  const lx=X(xs.at(-1)),ly=Y(ys.at(-1));
+  return `<svg class="spark" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}" role="img" aria-label="histórico de preço, de ${brl(ys[0])} a ${brl(ys.at(-1))}" data-s="${data}" data-w="${w}">
+  <polyline points="${pts}" fill="none" stroke="var(--series)" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+  <circle cx="${lx}" cy="${ly}" r="3.5" fill="var(--series)" stroke="var(--surface)" stroke-width="2"/></svg>`;
+}
+document.addEventListener('mousemove',e=>{
+  const s=e.target.closest&&e.target.closest('svg.spark');
+  if(!s){tip.style.display='none';return}
+  const series=JSON.parse(decodeURIComponent(s.dataset.s)),r=s.getBoundingClientRect();
+  const f=Math.min(1,Math.max(0,(e.clientX-r.left)/r.width));
+  const xs=series.map(p=>+new Date(p[0])),t=xs[0]+f*(xs.at(-1)-xs[0]);
+  let best=0;xs.forEach((x,i)=>{if(Math.abs(x-t)<Math.abs(xs[best]-t))best=i});
+  tip.textContent=new Date(series[best][0]).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'})+' · '+brl(series[best][1]);
+  tip.style.display='block';tip.style.left=(e.clientX+12)+'px';tip.style.top=(e.clientY+12)+'px';
+});
+function render(d){
+  const fresh=(Date.now()-new Date(d.generated_at))/60000;
+  const okSrc=d.sources.filter(s=>s.ok).length;
+  $('#gen').textContent='Última verificação: há '+ago(d.generated_at)+' · '+new Date(d.generated_at).toLocaleString('pt-BR');
+  const st=fresh>25?['bad','⛔ Monitor parado há '+Math.round(fresh)+' min']:d.sources.some(s=>!s.ok)?['warn','⚠️ Rodando, com fontes em falha']:['good','● Monitoramento ativo'];
+  $('#status').innerHTML=`<span class="pill ${st[0]}">${st[1]}</span>`;
+  const hits=d.subjects.flatMap(s=>s.listings.filter(l=>l.hit_target));
+  $('#kpis').innerHTML=[['Anúncios acompanhados',d.counts.listings],['Alertas nas últimas 24h',d.counts.alerts_24h],
+    ['No preço-alvo agora',hits.length],['Fontes ok',okSrc+'/'+d.sources.length]].map(k=>`<div class="kpi"><b>${k[1]}</b><span>${k[0]}</span></div>`).join('');
+  $('#subjects').innerHTML=d.subjects.map(s=>{
+    const rows=s.listings.map(l=>`<tr class="${l.hit_target?'hit':''}">
+      <td class="t"><a href="${esc(l.url)}" target="_blank" rel="noopener" title="${esc(l.title)}">${esc(l.title)}</a></td>
+      <td>${esc(l.store)}${l.in_stock===false?'<span class="tag bad">esgotado</span>':''}${l.confidence==='unconfirmed'?'<span class="tag warn">tela não confirmada</span>':''}${l.hit_target?'<span class="tag good">preço-alvo</span>':''}</td>
+      <td class="num"><b>${brl(l.price)}</b></td><td class="num hide-s">${brl(l.min_price)}</td>
+      <td class="hide-s">${spark(l.series)}</td><td class="num hide-s">${ago(l.last_seen)}</td></tr>`).join('');
+    return `<div class="card"><h3>${esc(s.name)}</h3>
+      <div class="meta">${s.kind==='product'?'Produto específico':'Categoria'}${s.max_price?' · alvo: até '+brl(s.max_price):''} · melhor preço em estoque: <b>${brl(s.best_price)}</b></div>
+      ${rows?`<div class="scroll"><table><thead><tr><th>Anúncio</th><th>Loja</th><th class="num">Preço</th><th class="num hide-s">Menor visto</th><th class="hide-s">30 dias</th><th class="num hide-s">Visto</th></tr></thead><tbody>${rows}</tbody></table></div>`
+      :'<div class="empty">Nenhum anúncio compatível visto ainda nos últimos 7 dias.</div>'}</div>`}).join('');
+  $('#alerts').innerHTML=d.alerts.length?`<table><thead><tr><th>Quando</th><th>Produto</th><th class="num">Preço</th><th>Motivo</th><th class="hide-s">Origem</th></tr></thead><tbody>`+
+    d.alerts.map(a=>`<tr><td>${ago(a.ts)}</td><td class="t"><a href="${esc(a.url||'#')}" target="_blank" rel="noopener">${esc(a.title||a.subject)}</a></td><td class="num"><b>${brl(a.price)}</b></td><td class="w">${esc(a.reason)}</td><td class="hide-s">${esc(a.origin)}</td></tr>`).join('')+`</tbody></table>`
+    :'<div class="empty">Nenhum alerta enviado ainda.</div>';
+  $('#community').innerHTML=d.community.length?`<table><thead><tr><th>Quando</th><th>Fonte</th><th>Resultado</th><th>Detalhe</th></tr></thead><tbody>`+
+    d.community.map(c=>`<tr><td>${ago(c.ts)}</td><td>${esc(c.source)}</td><td><span class="tag ${c.status==='alertado'?'good':c.status==='erro'?'bad':''}">${esc(c.status)}</span></td><td class="w">${esc(c.note)}</td></tr>`).join('')+`</tbody></table>`
+    :'<div class="empty">Sem publicações relevantes processadas ainda.</div>';
+  $('#sources').innerHTML=d.sources.length?`<table><thead><tr><th>Fonte</th><th>Estado</th><th class="num">Itens</th><th>Última checagem</th><th>Detalhe</th></tr></thead><tbody>`+
+    d.sources.map(s=>`<tr><td>${esc(s.source)}</td><td><span class="tag ${s.ok?'good':'bad'}">${s.ok?'● ok':'✕ '+esc(s.status)}</span></td><td class="num">${s.items}</td><td>há ${ago(s.ts)}</td><td class="w">${esc(s.error||'')}</td></tr>`).join('')+`</tbody></table>`
+    :'<div class="empty">Aguardando a primeira execução.</div>';
+}
+fetch('data.json?'+Date.now()).then(r=>r.json()).then(render).catch(e=>{$('#gen').textContent='Ainda sem dados — aguarde a primeira execução do monitor.'});
+</script>
+</body>
+</html>

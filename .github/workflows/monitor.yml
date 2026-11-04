@@ -1,0 +1,79 @@
+name: monitor
+
+on:
+  schedule:
+    - cron: "*/5 * * * *"      # mínimo que o GitHub permite; pode atrasar alguns minutos em horários de pico
+  workflow_dispatch:
+    inputs:
+      tier:
+        description: "auto | all | priority | general | community"
+        default: "all"
+
+concurrency:
+  group: radar-monitor
+  cancel-in-progress: false
+
+permissions:
+  contents: write              # publica o estado/painel no branch `data`
+  actions: write               # mantém o agendamento ativo (GitHub desliga cron após 60 dias sem atividade)
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - run: pip install -r requirements.txt
+
+      - name: Restaurar histórico (branch data)
+        run: |
+          mkdir -p state
+          if git ls-remote --exit-code --heads origin data >/dev/null 2>&1; then
+            git fetch --depth=1 origin data
+            git show FETCH_HEAD:radar.sqlite > state/radar.sqlite 2>/dev/null || rm -f state/radar.sqlite
+          fi
+          ls -la state || true
+
+      - name: Rodar monitor
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          NTFY_TOPIC: ${{ secrets.NTFY_TOPIC }}
+          HC_PING_URL: ${{ secrets.HC_PING_URL }}
+          ML_CLIENT_ID: ${{ secrets.ML_CLIENT_ID }}
+          ML_CLIENT_SECRET: ${{ secrets.ML_CLIENT_SECRET }}
+          ALI_APP_KEY: ${{ secrets.ALI_APP_KEY }}
+          ALI_APP_SECRET: ${{ secrets.ALI_APP_SECRET }}
+          ALI_TRACKING_ID: ${{ secrets.ALI_TRACKING_ID }}
+          SHOPEE_APP_ID: ${{ secrets.SHOPEE_APP_ID }}
+          SHOPEE_SECRET: ${{ secrets.SHOPEE_SECRET }}
+          IG_USER_ID: ${{ secrets.IG_USER_ID }}
+          IG_ACCESS_TOKEN: ${{ secrets.IG_ACCESS_TOKEN }}
+        run: python -m radar run --tier "${{ github.event.inputs.tier || 'auto' }}" --out state/data.json
+
+      - name: Publicar estado e painel (branch data)
+        if: always()
+        run: |
+          [ -f state/radar.sqlite ] || exit 0
+          rm -rf /tmp/pub && mkdir /tmp/pub
+          cp state/radar.sqlite state/data.json dashboard/index.html /tmp/pub/ 2>/dev/null || true
+          touch /tmp/pub/.nojekyll
+          cd /tmp/pub
+          git init -q -b data
+          git config user.name "radar-bot"
+          git config user.email "radar-bot@users.noreply.github.com"
+          git add -A
+          git commit -qm "estado $(date -u +%FT%TZ)"
+          git push -qf "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" data
+
+      - name: Manter o agendamento ativo
+        if: always()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh api -X PUT "repos/${{ github.repository }}/actions/workflows/monitor.yml/enable" || true
