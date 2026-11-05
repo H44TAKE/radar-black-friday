@@ -110,6 +110,12 @@ telegram:
       redirect_hosts: [tecno.click]
     - handle: gtofertas             # gt.OFERTAS (grupo seu)
       redirect_hosts: [aoferta.net]
+    - handle: Fraguas84Oficial      # Fraguas84 Promoções (grupo seu)
+      redirect_hosts: [aoferta.net, titorion.com.br]
+    - handle: tecnoarthardware      # TecnoArt (Promoções de Hardware) (grupo seu)
+      redirect_hosts: [aoferta.net]
+    - handle: pcdofafapromo         # PC do Fafa Promoções (grupo seu)
+      redirect_hosts: [pcdofafa.com.br]
 
 instagram:
   enabled: auto                  # precisa de IG_USER_ID + IG_ACCESS_TOKEN (API oficial Business Discovery)
