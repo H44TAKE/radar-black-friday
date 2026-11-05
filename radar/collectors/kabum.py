@@ -21,9 +21,35 @@ class Kabum(Collector):
     label = "KaBuM!"
     domains = ("kabum.com.br",)
 
+    @staticmethod
+    def _catalog_items(obj, _depth: int = 0):
+        """Formato atual do catálogo da KaBuM!: {code, name, friendlyName, price, priceWithDiscount, oldPrice, available}.
+        Não há campo de URL — ela é /produto/<code>/<friendlyName>. O walk_products genérico descarta esses itens."""
+        if _depth > 14:
+            return
+        if isinstance(obj, dict):
+            if obj.get("code") and obj.get("friendlyName") and isinstance(obj.get("name"), str):
+                prices = [float(obj[k]) for k in ("priceWithDiscount", "price") if isinstance(obj.get(k), (int, float)) and obj[k] > 0]
+                if prices:
+                    cash = min(prices)
+                    old = obj.get("oldPrice")
+                    yield {"title": obj["name"], "price": cash,
+                           "old_price": float(old) if isinstance(old, (int, float)) and old > cash * 1.01 else None,
+                           "url": f"{BASE}/produto/{obj['code']}/{obj['friendlyName']}",
+                           "in_stock": obj["available"] if isinstance(obj.get("available"), bool) else None,
+                           "image": obj.get("image") if isinstance(obj.get("image"), str) else None,
+                           "rating": obj.get("rating") or None,
+                           "raw": {"has_free_shipping": obj.get("hasFreeShipping", obj.get("has_free_shipping"))}}
+                    return
+            for v in obj.values():
+                yield from Kabum._catalog_items(v, _depth + 1)
+        elif isinstance(obj, list):
+            for v in obj:
+                yield from Kabum._catalog_items(v, _depth + 1)
+
     def _from_walk(self, data, base=BASE) -> list[Offer]:
         out, seen = [], set()
-        for p in walk_products(data, base):
+        for p in [*self._catalog_items(data), *walk_products(data, base)]:
             m = re.search(r"/produto/(\d+)", p["url"])
             if not m or m.group(1) in seen:
                 continue

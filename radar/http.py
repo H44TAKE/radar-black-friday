@@ -19,6 +19,7 @@ CHALLENGE_MARKERS = (
     "just a moment...", "cf-chl", "challenge-platform", "attention required! | cloudflare",
     "px-captcha", "_incapsula_resource", "access denied", "verify you are human",
     "captcha-delivery", "geo.captcha-delivery.com", "unusual traffic",
+    "suspicious-traffic",  # Mercado Livre: página de verificação com HTTP 200
 )
 
 
