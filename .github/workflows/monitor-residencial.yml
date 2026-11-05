@@ -26,7 +26,7 @@ jobs:
     steps:
       - name: Git Bash no PATH (runner Windows)
         shell: cmd
-        run: echo C:\Program Files\Gitin>>%GITHUB_PATH%
+        run: echo C:\Program Files\Git\bin>>%GITHUB_PATH%
 
       - uses: actions/checkout@v4
 
