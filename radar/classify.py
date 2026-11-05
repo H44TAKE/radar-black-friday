@@ -160,7 +160,25 @@ def rule_lcd_watercooler(title: str, desc: str, cfg: dict) -> Optional[Match]:
     return m
 
 
-RULES = {"monitor_arm": rule_monitor_arm, "argb_fan_kit": rule_argb_fan_kit, "lcd_watercooler": rule_lcd_watercooler}
+def rule_keywords(title: str, desc: str, cfg: dict) -> Optional[Match]:
+    """Categoria genérica por palavras-chave (regex sobre o título normalizado, sem acento/maiúscula).
+    include_any: pelo menos um padrão precisa casar; include_all: todos precisam casar; exclude_any: nenhum pode casar."""
+    t = norm(title)
+    inc_any = cfg.get("include_any") or []
+    inc_all = cfg.get("include_all") or []
+    if inc_any and not any(re.search(p, t) for p in inc_any):
+        return None
+    if any(not re.search(p, t) for p in inc_all):
+        return None
+    if any(re.search(p, t) for p in (cfg.get("exclude_any") or [])):
+        return None
+    if not inc_any and not inc_all:
+        return None
+    return Match("", "category", "")
+
+
+RULES = {"monitor_arm": rule_monitor_arm, "argb_fan_kit": rule_argb_fan_kit, "lcd_watercooler": rule_lcd_watercooler,
+         "keywords": rule_keywords}
 
 
 def match_product(title: str, spec: dict) -> bool:

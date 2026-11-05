@@ -20,7 +20,7 @@ settings:
     default_min_drop_pct: 10     # queda mínima vs. preço habitual (quando a categoria não define)
     resend_drop_pct: 5           # só reavisa o mesmo anúncio se cair mais 5%
     unverified_claim_min_pct: 40 # sem histórico: só avisa se a loja declarar >= 40% de desconto
-    max_unverified_per_day: 3    # teto de avisos "sem histórico" por assunto/dia
+    max_unverified_per_day: 5    # teto de avisos "sem histórico" por assunto/dia
     community_max_age_hours: 8   # ignora publicações de comunidade mais antigas que isso
 
 # ---------------------------------------------------------------- lojas
@@ -77,6 +77,62 @@ categories:
     max_price: 600
     sizes: [240, 360]
     search_terms: ["water cooler lcd 360mm", "water cooler tela lcd personalizável", "water cooler display lcd 240mm", "water cooler tela redonda"]
+
+  # ---- categorias genéricas (regra "keywords"): qualquer marca/loja, sem teto de preço.
+  # Sem histórico, avisam quando a oferta declara >= min_claim_pct de desconto ("de R$ X por R$ Y");
+  # com histórico (lojas lidas ao vivo) avisam quando cai min_drop_pct abaixo do preço habitual.
+  - id: water-cooler-geral
+    name: Water cooler (qualquer modelo)
+    rule: keywords
+    include_any: ['water ?cooler', 'cooler liquido', 'refrigeracao liquida', '\baio\b']
+    exclude_any: ['liquido (de )?(reposicao|refrigerante)', 'fluido', 'aditivo', 'bloco ', 'reservatorio', 'tubo', 'mangueira',
+                  'conector', 'suporte', 'backplate', 'kit de reposicao', 'pc gamer', 'computador', 'notebook']
+    min_drop_pct: 15
+    min_claim_pct: 20
+    search_terms: ["water cooler 240mm", "water cooler 360mm"]
+
+  - id: processador
+    name: Processador
+    rule: keywords
+    include_any: ['processador', '\bryzen\b', 'core i[3579]\b', 'core ultra', 'i[3579]-\d{4,5}']
+    exclude_any: ['notebook', 'pc gamer', 'computador', 'desktop', 'cooler', 'pasta termica', 'placa mae', 'kit upgrade',
+                  'water', 'suporte', 'smartphone', 'celular', 'adesivo', 'caneca', 'camiseta']
+    min_drop_pct: 10
+    min_claim_pct: 15
+    search_terms: ["processador amd ryzen", "processador intel core"]
+
+  - id: memoria-ram
+    name: Memória RAM (desktop)
+    rule: keywords
+    include_all: ['\bmemoria\b']
+    include_any: ['\bddr[345]\b', '\bram\b']
+    exclude_any: ['notebook', 'so-?dimm', 'so dimm', 'cartao', 'micro ?sd', 'pendrive', 'placa de video', 'gpu', 'ssd',
+                  'pc gamer', 'computador', 'celular', 'smartphone', 'kit upgrade', 'placa mae']
+    min_drop_pct: 12
+    min_claim_pct: 20
+    search_terms: ["memoria ram ddr5", "memoria ram ddr4"]
+
+  - id: ventoinhas-geral
+    name: Ventoinhas / fans (qualquer)
+    rule: keywords
+    include_any: ['ventoinha', '\bfans?\b', 'cooler fan']
+    exclude_any: ['notebook', 'usb', 'mesa', 'teto', 'parede', 'portatil', 'ventilador de', 'pc gamer', 'computador',
+                  'water cooler', 'watercooler', '^gabinete', 'gabinete gamer', 'placa de video', 'gpu', 'fan art', 'fan club']
+    min_drop_pct: 20
+    min_claim_pct: 25
+    search_terms: ["ventoinha 120mm", "kit ventoinha gabinete"]
+
+  - id: mesas
+    name: Mesas (gamer / escritório / computador)
+    rule: keywords
+    include_all: ['\bmesa\b|escrivaninha|bancada']
+    include_any: ['gamer', 'escritorio', 'computador', 'home office', 'pc ', 'escrivaninha', 'standing', 'regulavel', 'altura ajustavel']
+    exclude_any: ['digitalizadora', 'mesa de (som|jantar|centro|cabeceira|bilhar|sinuca|jogo|cirurgica)', 'mesa lateral',
+                  'mesa posta', 'mouse ?pad', 'tapete', 'cadeira', 'suporte', 'notebook', 'infantil', 'bebe', 'pet ', 'camping',
+                  'dobravel de plastico', 'apoio']
+    min_drop_pct: 15
+    min_claim_pct: 25
+    search_terms: ["mesa gamer", "mesa escritorio computador"]
 
 # modelos com tela personalizável CONFIRMADA pelo fabricante (regex sobre o título normalizado).
 # Acrescente aqui outros que você conhecer. Só entram na categoria se o título casar OU se o texto

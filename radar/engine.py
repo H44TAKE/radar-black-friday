@@ -124,7 +124,7 @@ def evaluate(db: DB, offer: Offer, match: Match, cfg: dict) -> Decision:
         if offer.old_price:
             d.reference_price, d.reference_label = offer.old_price, "preço 'de' declarado pela loja (não confirmado)"
             d.discount_pct = claimed
-        floor = setting(cfg, "alerts", "unverified_claim_min_pct")
+        floor = float(spec.get("min_claim_pct", setting(cfg, "alerts", "unverified_claim_min_pct")))
         if (not cap or price > float(cap)) and claimed and claimed >= floor:
             if db.unverified_alerts_today(match.subject) < setting(cfg, "alerts", "max_unverified_per_day"):
                 d.reasons.append(f"desconto declarado de {claimed:.0f}% (sem histórico suficiente para confirmar)")

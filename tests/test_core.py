@@ -337,3 +337,38 @@ def test_blocked_store_is_discarded_when_disabled(db):
     ctx = Ctx(db, Fetcher(), {"terabyte": BlockedStore(Fetcher(), {})}, cfg, set(cfg["trusted_domains"]))
     o, status = post_to_offer(post, ctx)
     assert o is None and "bloqueado" in status
+
+
+def _subjects(title, desc=""):
+    return {m.subject for m in match_subjects(title, desc, load_config())}
+
+
+@pytest.mark.parametrize("title,expected", [
+    ("Processador AMD Ryzen 5 5600, 6 Núcleos, 12 Threads, AM4", "processador"),
+    ("Processador Intel Core i5-14400F 2.5GHz LGA1700", "processador"),
+    ("Memória RAM Kingston Fury Beast 16GB DDR5 5200MHz", "memoria-ram"),
+    ("Kit Memória Corsair Vengeance 32GB (2x16GB) DDR4 3200", "memoria-ram"),
+    ("Water Cooler Redragon Ice Rage 240mm ARGB", "water-cooler-geral"),
+    ("Ventoinha Gabinete 120mm ARGB Redragon", "ventoinhas-geral"),
+    ("Kit 3 Fans Lian Li UNI FAN SL120", "ventoinhas-geral"),
+    ("Mesa Gamer Escrivaninha 120cm Preta com Cabideiro", "mesas"),
+    ("Mesa para Computador Escritório Home Office 140cm", "mesas"),
+])
+def test_new_categories_match(title, expected):
+    assert expected in _subjects(title)
+
+
+@pytest.mark.parametrize("title,not_expected", [
+    ("Cooler para Processador AMD Ryzen Wraith Stealth", "processador"),
+    ("Notebook Acer Aspire Intel Core i5 8GB 512GB", "processador"),
+    ("PC Gamer Completo Ryzen 5 5600 16GB RTX 4060", "processador"),
+    ("Memória RAM Notebook SODIMM 8GB DDR4", "memoria-ram"),
+    ("Cartão de Memória MicroSD 128GB", "memoria-ram"),
+    ("Ventilador de Mesa 40cm Mondial", "ventoinhas-geral"),
+    ("Ventoinha USB Portátil de Mesa", "ventoinhas-geral"),
+    ("Mesa de Som Behringer 12 Canais", "mesas"),
+    ("Mesa Digitalizadora Wacom One", "mesas"),
+    ("Líquido de Reposição para Water Cooler 1L", "water-cooler-geral"),
+])
+def test_new_categories_reject_lookalikes(title, not_expected):
+    assert not_expected not in _subjects(title)
