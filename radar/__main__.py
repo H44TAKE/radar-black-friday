@@ -4,9 +4,11 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import re
 import sys
 import time
 from pathlib import Path
+from urllib.parse import urlparse
 
 from .collectors import build_collectors
 from .config import ROOT, load_config
@@ -60,6 +62,21 @@ def cmd_diagnose(args):
     outdir.mkdir(parents=True, exist_ok=True)
     report = {"sources": {}}
     f, cfg = app.f, app.cfg
+    _orig_get, _n = f.get, [0]
+
+    def _capturing_get(url, *a, **kw):
+        r = _orig_get(url, *a, **kw)
+        try:
+            _n[0] += 1
+            host = re.sub(r"[^a-z0-9]+", "_", urlparse(url).netloc.lower())
+            ext = "json" if "json" in r.headers.get("content-type", "") else "html"
+            (outdir / f"raw-{_n[0]:02d}-{host}.{ext}").write_text(
+                f"<!-- {url} HTTP {r.status_code} -->\n" + r.text[:300000], encoding="utf-8")
+        except Exception:  # noqa: BLE001
+            pass
+        return r
+
+    f.get = _capturing_get
     print("=== Lojas: páginas de produto prioritárias ===")
     for p in cfg["products"]:
         for store, url in (p.get("urls") or {}).items():
