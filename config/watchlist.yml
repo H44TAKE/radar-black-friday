@@ -108,6 +108,8 @@ telegram:
     - handle: canaltechofertas      # "Baita Compra | Tech" (Canaltech Ofertas)
     - handle: achadosdotb           # Achados do Tecnoblog — ofertas de tecnologia
       redirect_hosts: [tecno.click]
+    - handle: gtofertas             # gt.OFERTAS (grupo seu)
+      redirect_hosts: [aoferta.net]
 
 instagram:
   enabled: auto                  # precisa de IG_USER_ID + IG_ACCESS_TOKEN (API oficial Business Discovery)
