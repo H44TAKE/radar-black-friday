@@ -17,13 +17,17 @@ permissions:
 
 defaults:
   run:
-    shell: C:PROGRA~1Gitbinbash.exe --noprofile --norc -eo pipefail {0}
+    shell: bash
 
 jobs:
   run:
     runs-on: [self-hosted, residencial]
     timeout-minutes: 12
     steps:
+      - name: Git Bash no PATH (runner Windows)
+        shell: cmd
+        run: echo C:\Program Files\Gitin>>%GITHUB_PATH%
+
       - uses: actions/checkout@v4
 
       - run: py -m pip install -q -r requirements.txt tzdata
