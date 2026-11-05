@@ -60,18 +60,22 @@ def evaluate(db: DB, offer: Offer, match: Match, cfg: dict) -> Decision:
     # ---------------- filtros duros (qualidade / segurança) ----------------
     if not price:
         d.blocked.append("sem preço legível")
-    if offer.in_stock is not True:
+    unc = bool(getattr(offer, "unconfirmed", False))
+    if unc:
+        d.flags.append("preço DIVULGADO no grupo, NÃO verificado na loja (a loja bloqueou a abertura da página) — "
+                       "confira preço, estoque e vendedor antes de comprar")
+    if offer.in_stock is not True and not unc:
         d.blocked.append("esgotado" if offer.in_stock is False else "estoque não confirmado")
     if (offer.condition or "new") != "new" and not spec.get("allow_used"):
         d.blocked.append("produto usado/recondicionado")
-    if not offer.verified:
+    if not offer.verified and not unc:
         d.blocked.append("preço não verificado na página do produto")
     if match.confidence != "confirmed":
         d.blocked.append("característica obrigatória não confirmada (" + "; ".join(match.flags) + ")")
     if offer.store in MARKETPLACES or offer.store.startswith("outro:"):
         if offer.store.startswith("outro:") and offer.host not in trusted and not any(offer.host.endswith("." + t) for t in trusted):
             d.blocked.append("loja fora da lista de confiança")
-        elif offer.store in MARKETPLACES and offer.seller_ok is not True and not offer.official_store:
+        elif offer.store in MARKETPLACES and offer.seller_ok is not True and not offer.official_store and not unc:
             d.blocked.append("vendedor não confirmado como confiável")
     min_rating = spec.get("min_rating")
     if min_rating and offer.rating is not None and offer.rating < float(min_rating):

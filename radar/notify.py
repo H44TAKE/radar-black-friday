@@ -32,7 +32,10 @@ def build_message(o: Offer, d: Decision) -> str:
     L = [head, "", f"<b>Produto:</b> {_e(o.title[:160])}"]
     if community:
         L.append(f"<b>Preço divulgado:</b> {brl(o.announced_price) if o.announced_price else 'não informado'}")
-        L.append(f"<b>Preço verificado agora:</b> {brl(o.price)}")
+        if o.unconfirmed:
+            L.append("<b>Preço verificado agora:</b> não — a loja bloqueou a abertura da página")
+        else:
+            L.append(f"<b>Preço verificado agora:</b> {brl(o.price)}")
     else:
         L.append(f"<b>Preço encontrado:</b> {brl(o.price)}")
     if d.reference_price:
@@ -57,12 +60,16 @@ def build_message(o: Offer, d: Decision) -> str:
         L.append("<b>Frete:</b> não calculado (informe o CEP no carrinho)")
     if o.coupon:
         L.append(f"<b>Cupom:</b> <code>{_e(o.coupon)}</code>")
-    L.append("<b>Disponibilidade:</b> Em estoque ✅ <i>(verificado na página do produto agora)</i>")
+    if o.unconfirmed:
+        L.append("<b>Disponibilidade:</b> não verificada ⚠️")
+    else:
+        L.append("<b>Disponibilidade:</b> Em estoque ✅ <i>(verificado na página do produto agora)</i>")
     if not community:
         L.append(f"<b>Link direto para comprar:</b> {_e(o.url)}")
     else:
         L.append(f"<b>Link da loja:</b> {_e(o.url)}")
-        L.append("<b>Status:</b> Preço verificado.")
+        L.append("<b>Status:</b> ⚠️ NÃO verificado — preço informado pela comunidade." if o.unconfirmed
+                 else "<b>Status:</b> Preço verificado.")
     analysis = [r.capitalize() if i == 0 else r for i, r in enumerate(d.reasons)]
     L.append("")
     L.append("<b>Análise:</b> " + _e("; ".join(analysis)) + ".")

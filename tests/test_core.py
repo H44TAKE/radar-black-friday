@@ -303,3 +303,37 @@ def test_community_irrelevant_and_untrusted_links(db):
     p2 = Post("telegram:x", "Canal", "2", datetime.now(timezone.utc), "Water Cooler LCD 360mm Customizável R$ 400 https://golpe.xyz/a", ["https://golpe.xyz/a"])
     o, status = post_to_offer(p2, ctx)
     assert o is None and "fora da lista de confiança" in status
+
+
+class BlockedStore(Terabyte):
+    def fetch_product(self, url):
+        from radar.http import Blocked
+        raise Blocked(url, "HTTP 403", 403)
+
+
+def test_blocked_store_uses_community_price_when_enabled(db):
+    import copy
+    cfg = copy.deepcopy(CFG)
+    cfg["telegram"]["accept_unconfirmed_when_blocked"] = True
+    post = parse_channel_html(TG_HTML, "pxinxa")[0]
+    post.links = ["https://www.terabyteshop.com.br/produto/1/x"]
+    ctx = Ctx(db, Fetcher(), {"terabyte": BlockedStore(Fetcher(), {})}, cfg, set(cfg["trusted_domains"]))
+    o, status = post_to_offer(post, ctx)
+    assert status == "ok-nao-verificado" and o.unconfirmed and o.price == 529.90 and o.verified is False
+    n = Notifier(dry_run=True)
+    app = App(cfg, db, Fetcher(), n, {"terabyte": BlockedStore(Fetcher(), {})})
+    assert app.handle_offer(o) == 1
+    assert "NÃO verificado" in n.sent[0]
+    # não polui o histórico de preços
+    assert db.c.execute("SELECT COUNT(*) FROM listings").fetchone()[0] == 0
+
+
+def test_blocked_store_is_discarded_when_disabled(db):
+    import copy
+    cfg = copy.deepcopy(CFG)
+    cfg["telegram"]["accept_unconfirmed_when_blocked"] = False
+    post = parse_channel_html(TG_HTML, "pxinxa")[0]
+    post.links = ["https://www.terabyteshop.com.br/produto/1/x"]
+    ctx = Ctx(db, Fetcher(), {"terabyte": BlockedStore(Fetcher(), {})}, cfg, set(cfg["trusted_domains"]))
+    o, status = post_to_offer(post, ctx)
+    assert o is None and "bloqueado" in status

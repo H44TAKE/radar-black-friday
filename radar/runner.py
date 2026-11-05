@@ -97,6 +97,9 @@ class App:
         matches = match_subjects(o.title, o.description, self.cfg)
         if not matches or not o.price:
             return 0
+        if o.unconfirmed:
+            # preço só divulgado em comunidade: não entra no histórico (não contamina a mediana) e não há o que verificar
+            return self._decide_and_notify(o, matches)
         self.db.upsert_offer(o, matches)
 
         if not o.verified or any(m.confidence != "confirmed" for m in matches):

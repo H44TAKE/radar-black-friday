@@ -7,7 +7,7 @@ import re
 from dataclasses import dataclass, field
 from typing import Optional
 
-from .classify import match_subjects
+from .classify import detect_condition, match_subjects
 from .collectors import Collector, GenericStore, collector_for
 from .db import DB
 from .http import Blocked, Fetcher, RobotsDisallow
@@ -82,6 +82,22 @@ def _tag(o: Offer, post: Post, cand: Candidate) -> Offer:
     return o
 
 
+def _unconfirmed(fallback, cand: Candidate, post: Post, ctx: Ctx) -> Optional[Offer]:
+    """Loja bloqueou a abertura da página (anti-bot/robots): se o config permitir, usa o preço DIVULGADO no
+    grupo, marcado como NÃO verificado. Só para lojas conhecidas, com preço e título extraídos do post."""
+    tg = ctx.cfg.get("telegram") or {}
+    if not fallback or not tg.get("accept_unconfirmed_when_blocked", False):
+        return None
+    if not (cand.price and cand.title):
+        return None
+    final, coll = fallback
+    if isinstance(coll, GenericStore):
+        return None
+    o = Offer(store=coll.name, title=cand.title, url=final, price=cand.price, old_price=cand.old_price,
+              in_stock=None, condition=detect_condition(cand.title), verified=False, unconfirmed=True)
+    return _tag(o, post, cand)
+
+
 def post_to_offer(post: Post, ctx: Ctx) -> tuple[Optional[Offer], str]:
     """Retorna (oferta verificada | None, status)."""
     cand = extract_candidate(post.text)
@@ -97,6 +113,7 @@ def post_to_offer(post: Post, ctx: Ctx) -> tuple[Optional[Offer], str]:
             note = f"link fora da lista de confiança ({host_of(url)})"
             continue
         visited += 1
+        fallback = None
         try:
             direct = {d for col in ctx.collectors.values() for d in col.domains} | ctx.trusted
             h0 = host_of(url)
@@ -109,12 +126,19 @@ def post_to_offer(post: Post, ctx: Ctx) -> tuple[Optional[Offer], str]:
             if not isinstance(coll, GenericStore) and not coll.enabled():
                 note = f"{coll.label}: sem acesso configurado"
                 continue
+            fallback = (final, coll)
             offer = coll.fetch_product(final)
         except Blocked as e:
             note = f"bloqueado ao abrir link ({e.reason})"
+            u = _unconfirmed(fallback, cand, post, ctx)
+            if u:
+                return u, "ok-nao-verificado"
             continue
         except RobotsDisallow:
             note = "robots.txt não permite abrir o link"
+            u = _unconfirmed(fallback, cand, post, ctx)
+            if u:
+                return u, "ok-nao-verificado"
             continue
         except Exception as e:  # link quebrado, timeout...
             note = f"link quebrado/inacessível ({str(e)[:60]})"

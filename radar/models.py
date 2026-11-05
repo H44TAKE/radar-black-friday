@@ -39,6 +39,7 @@ class Offer:
     origin_label: Optional[str] = None
     origin_url: Optional[str] = None
     announced_price: Optional[float] = None
+    unconfirmed: bool = False       # preço só divulgado na comunidade (a loja bloqueou a abertura da página)
 
     def __post_init__(self):
         self.url = clean_url(self.url)

@@ -93,13 +93,21 @@ known_lcd_models:
 # ---------------------------------------------------------------- comunidades (Seção 2.1)
 telegram:
   respect_robots: true
-  bot_groups: true               # lê grupos onde o SEU bot foi adicionado (desligue o Group Privacy no BotFather)
+  # Lojas que bloqueiam o GitHub (Pichau, Mercado Livre...) não deixam abrir o link do post. Com isto ligado, o alerta
+  # sai com o preço DIVULGADO no grupo, marcado como "NÃO verificado". Desligue (false) para exigir verificação na loja.
+  accept_unconfirmed_when_blocked: true
+  bot_groups: true              # lê grupos onde o SEU bot foi adicionado (desligue o Group Privacy no BotFather)
   # groups_allow: [-1001234567890, meu_grupo_publico]   # opcional: restringe a estes grupos
   channels:                      # canais PÚBLICOS (visualização web t.me/s/<canal>) — adicione os seus
     - handle: ofertaskabum       # canal oficial da KaBuM! (linkado na página oficial deles)
     - handle: pxinxa             # ofertas gerais (testei a visualização web)
       redirect_hosts: [pxinxa.com.br]
     - handle: cupons_desconto    # Promobit — Promoções e Cupons
+    - handle: promocoesdehardware   # "Ofertas PC Gamer Peças Hardware" — canal público focado em hardware
+      redirect_hosts: [nerdofertas.com, ofertou.ai]
+    - handle: canaltechofertas      # "Baita Compra | Tech" (Canaltech Ofertas)
+    - handle: achadosdotb           # Achados do Tecnoblog — ofertas de tecnologia
+      redirect_hosts: [tecno.click]
 
 instagram:
   enabled: auto                  # precisa de IG_USER_ID + IG_ACCESS_TOKEN (API oficial Business Discovery)
