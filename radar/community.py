@@ -149,6 +149,11 @@ def post_to_offer(post: Post, ctx: Ctx) -> tuple[Optional[Offer], str]:
         if jaccard(cand.title, offer.title) < 0.2:
             note = "produto do link não corresponde ao anunciado"
             continue
+        # trava anti-erro de leitura (ex.: parcela lida como preço): o preço da página precisa ser compatível com o do post
+        if cand.price and offer.price and not (0.5 * cand.price <= offer.price <= 1.3 * cand.price):
+            note = (f"preço lido na loja ({offer.price:.2f}) diverge muito do divulgado ({cand.price:.2f}) "
+                    "— descartado por segurança")
+            continue
         return _tag(offer, post, cand), "ok"
 
     # sem link utilizável (ex.: Instagram): procurar pelo nome nas lojas e conferir o preço divulgado

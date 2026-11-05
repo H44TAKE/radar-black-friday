@@ -372,3 +372,14 @@ def test_new_categories_match(title, expected):
 ])
 def test_new_categories_reject_lookalikes(title, not_expected):
     assert not_expected not in _subjects(title)
+
+
+def test_page_price_far_from_announced_is_discarded(db):
+    # preço lido na página (ex.: parcela de R$ 60,60) muito abaixo do divulgado (R$ 529,90) -> não alerta
+    page = offer(60.6, title="Water Cooler 360mm Display LCD Customizável ARGB Intel AMD Preto")
+    store = FakeStore(page)
+    post = parse_channel_html(TG_HTML, "pxinxa")[0]
+    post.links = ["https://www.terabyteshop.com.br/produto/1/x"]
+    ctx = Ctx(db, Fetcher(), {"terabyte": store}, CFG, set(CFG["trusted_domains"]))
+    o, status = post_to_offer(post, ctx)
+    assert o is None and "diverge" in status
